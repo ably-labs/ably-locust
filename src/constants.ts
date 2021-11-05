@@ -16,4 +16,4 @@ export const HEARTBEAT_INTERVAL = 1000;
 /**
  * The interval between sending stats.
  */
-export const STATS_INTERVAL = 3000
+export const STATS_INTERVAL = 3000;

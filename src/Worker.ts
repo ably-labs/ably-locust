@@ -1,16 +1,16 @@
-import { Dealer } from 'zeromq'
-import { HEARTBEAT_INTERVAL, PROTOCOL_VERSION, STATS_INTERVAL } from './constants'
-import { Message, MessageType } from './message'
+import { Dealer } from 'zeromq';
+import { HEARTBEAT_INTERVAL, PROTOCOL_VERSION, STATS_INTERVAL } from './constants';
+import { Message, MessageType } from './Message';
 
 /**
  * Options for initialising a Worker.
  *
  * @typeparam uri The URI of the Locust master ZeroMQ socket.
- * @typeparam worker_id The worker_id sent in every protocol message.
+ * @typeparam workerID The workerID sent in every protocol message.
  */
 interface Options {
   uri: string;
-  worker_id: string;
+  workerID: string;
 }
 
 /**
@@ -38,8 +38,8 @@ interface SpawnData {
  * type.
  */
 const isSpawnData = (data: unknown): data is SpawnData => {
-  return (data as SpawnData).user_classes_count !== undefined
-}
+  return (data as SpawnData).user_classes_count !== undefined;
+};
 
 /**
  * A User that is started and stopped during a load test.
@@ -60,7 +60,7 @@ type UserFn = () => User;
  */
 export class Worker {
   /**
-   * The ID of the worker which is used as the worker_id in all protocol
+   * The ID of the worker which is used as the workerID in all protocol
    * messages sent by this worker.
    */
   id: string;
@@ -85,7 +85,7 @@ export class Worker {
    * A map of user class names to the list of running users for each of those
    * classes.
    */
-  users: { [key: string]: Array<User> };
+  users: { [key: string]: User[] };
 
   /**
    * The current state of the worker.
@@ -95,15 +95,15 @@ export class Worker {
   /**
    * The ID of the heartbeat interval.
    */
-  heartbeat: ReturnType<typeof setInterval>;
+  heartbeat?: ReturnType<typeof setInterval>;
 
   /**
    * The ID of the stats interval.
    */
-  stats: ReturnType<typeof setInterval>;
+  stats?: ReturnType<typeof setInterval>;
 
   constructor(opts: Options) {
-    this.id = opts.worker_id;
+    this.id = opts.workerID;
     this.uri = opts.uri;
     this.dealer = new Dealer({ routingId: this.id });
     this.userFns = {};
@@ -141,8 +141,8 @@ export class Worker {
         const msg = Message.decode(data);
 
         this.handle(msg);
-      } catch(err) {
-        console.error(`Error handling incoming message: ${err}`)
+      } catch (err) {
+        console.error(`Error handling incoming message: ${err}`);
       }
     }
   }
@@ -162,10 +162,10 @@ export class Worker {
   handle(msg: Message) {
     switch (msg.type) {
       case MessageType.Spawn:
-        if(isSpawnData(msg.data)) {
-          this.handleSpawn(msg.data)
+        if (isSpawnData(msg.data)) {
+          this.handleSpawn(msg.data);
         } else {
-          throw new Error('Invalid spawn data, missing "user_classes_count"')
+          throw new Error('Invalid spawn data, missing "user_classes_count"');
         }
         break;
       case MessageType.Stop:
@@ -188,10 +188,10 @@ export class Worker {
 
     this.send(MessageType.Spawning, null);
 
-    for (const userClass in data.user_classes_count) {
+    for (const userClass of Object.keys(data.user_classes_count)) {
       // check we have a registered function for the given class
       const userFn = this.userFns[userClass];
-      if(userFn === undefined) {
+      if (userFn === undefined) {
         console.log(`WARN: no function has been registered for the '${userClass}' user class, skipping those users`);
         continue;
       }
@@ -234,7 +234,7 @@ export class Worker {
     this.stopAllUsers();
     this.stopHeartbeat();
     this.stopStats();
-    await this.dealer.close()
+    await this.dealer.close();
   }
 
   /**
@@ -254,7 +254,7 @@ export class Worker {
   stopUsers(userClass: string, count: number) {
     for (let i = 0; i < count; i++) {
       const user = this.users[userClass].pop();
-      if(user !== undefined) {
+      if (user !== undefined) {
         user.stop();
       }
     }
@@ -264,8 +264,8 @@ export class Worker {
    * Stop all users.
    */
   stopAllUsers() {
-    for (const userClass in this.users) {
-      this.stopUsers(userClass, this.users[userClass].length)
+    for (const userClass of Object.keys(this.users)) {
+      this.stopUsers(userClass, this.users[userClass].length);
     }
   }
 
@@ -280,7 +280,7 @@ export class Worker {
    * Stop sending heartbeats to the Locust master.
    */
   stopHeartbeat() {
-    if(this.heartbeat) {
+    if (this.heartbeat) {
       clearInterval(this.heartbeat);
     }
   }
@@ -290,7 +290,7 @@ export class Worker {
    */
   sendHeartbeat() {
     this.send(MessageType.Heartbeat, {
-      state:             this.state,
+      state: this.state,
       current_cpu_usage: 0.0,
     });
   }
@@ -306,7 +306,7 @@ export class Worker {
    * Stop sending stats to the Locust master.
    */
   stopStats() {
-    if(this.stats) {
+    if (this.stats) {
       clearInterval(this.stats);
     }
   }
@@ -336,8 +336,8 @@ export class Worker {
       errors: {},
       user_classes_count: Object.fromEntries(
         Object.entries(this.users).map(([userClass, users]) => {
-          return [userClass, users.length]
-        })
+          return [userClass, users.length];
+        }),
       ),
       user_count: Object.values(this.users).reduce((sum, users) => sum + users.length, 0),
     });

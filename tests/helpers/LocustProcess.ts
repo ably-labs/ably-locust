@@ -31,11 +31,18 @@ interface SpawnResponse {
  * Expects 'locust' to be in $PATH.
  */
 export class LocustProcess {
-  cmd: ChildProcess;
+  cmd?: ChildProcess;
   stdout: string;
   stderr: string;
   web_uri: string;
   zeromq_uri: string;
+
+  constructor() {
+    this.stdout = '';
+    this.stderr = '';
+    this.web_uri = 'http://127.0.0.1:18089';
+    this.zeromq_uri = 'tcp://127.0.0.1:15557';
+  }
 
   /**
    * Start Locust as a child process and return a Promise which resolves when
@@ -53,24 +60,22 @@ export class LocustProcess {
         '--web-port=18089',
       ],
     );
-    this.web_uri = 'http://127.0.0.1:18089';
-    this.zeromq_uri = 'tcp://127.0.0.1:15557';
 
     return new Promise((resolve, reject) => {
-      this.cmd.stdout.on('data', (data) => {
+      this.cmd!.stdout!.on('data', (data) => {
         this.stdout += data;
       });
-      this.cmd.stderr.on('data', (data) => {
+      this.cmd!.stderr!.on('data', (data) => {
         this.stderr += data;
 
         if(data.includes('Starting Locust')) {
           resolve();
         }
       });
-      this.cmd.on('error', (err) => {
+      this.cmd!.on('error', (err) => {
         reject(new Error(`Locust failed to start; error=${err} stdout=${this.stdout} stderr=${this.stderr}`));
       });
-      this.cmd.on('close', (code) => {
+      this.cmd!.on('close', (code) => {
         reject(new Error(`Locust failed to start; code=${code} stdout=${this.stdout} stderr=${this.stderr}`));
       });
     });
@@ -82,6 +87,10 @@ export class LocustProcess {
    */
   stop(): Promise<void> {
     return new Promise((resolve, reject) => {
+      if(!this.cmd) {
+        resolve();
+        return;
+      }
       this.cmd.on('close', (code) => {
         if(code == 0) {
           resolve();

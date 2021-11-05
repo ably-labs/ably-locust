@@ -17,7 +17,7 @@ afterEach(() => {
 test('run a load test', async () => {
   // create a worker
   const worker = new Worker({
-    worker_id: 'test',
+    workerID: 'test',
     uri: locust.zeromq_uri,
   });
 
@@ -47,7 +47,7 @@ test('run a load test', async () => {
   await locust.startLoadTest({ user_count: 10, spawn_rate: 10 });
 
   // check 10 users start
-  const userCountIs = (count) => async () => userCount === count;
+  const userCountIs = (count: number) => async () => userCount === count;
   await waitUntil(userCountIs(10), 500, 10000);
 
   // stop the load test
