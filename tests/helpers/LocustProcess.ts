@@ -3,10 +3,26 @@ import { spawn, ChildProcess } from 'child_process';
 import got from 'got';
 
 /**
- * The Locust API response from GET /stats/requests.
+ * A Locust API response from GET /stats/requests.
  */
 interface StatsResponse {
   workers: string[];
+}
+
+/**
+ * A Locust API request to POST /spawn.
+ */
+interface SpawnRequest {
+  user_count: number;
+  spawn_rate: number;
+}
+
+/**
+ * A Locust API response from POST /spawn.
+ */
+interface SpawnResponse {
+  success: boolean;
+  message: string;
 }
 
 /**
@@ -83,5 +99,19 @@ export class LocustProcess {
    */
   stats(): Promise<StatsResponse> {
     return got.get(`${this.web_uri}/stats/requests`).json();
+  }
+
+  /**
+   * Start a load test using the Locust web API.
+   */
+  startLoadTest(req: SpawnRequest): Promise<SpawnResponse> {
+    return got.post(`${this.web_uri}/swarm`, { form: req }).json();
+  }
+
+  /**
+   * Stop a load test using the Locust web API.
+   */
+  stopLoadTest(): Promise<SpawnResponse> {
+    return got.get(`${this.web_uri}/stop`).json();
   }
 }
