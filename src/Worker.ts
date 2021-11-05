@@ -186,6 +186,8 @@ export class Worker {
   handleSpawn(data: SpawnData) {
     this.state = WorkerState.Spawning;
 
+    this.send(MessageType.Spawning, null);
+
     for (const userClass in data.user_classes_count) {
       // check we have a registered function for the given class
       const userFn = this.userFns[userClass];
@@ -208,14 +210,18 @@ export class Worker {
         this.stopUsers(userClass, actualCount - expectedCount);
       }
     }
+
+    this.send(MessageType.SpawningComplete, data);
   }
 
   /**
    * Handle a 'stop' protocol message by stopping all users.
    */
-  handleStop() {
+  async handleStop() {
     this.state = WorkerState.Stopping;
     this.stopAllUsers();
+    await this.send(MessageType.ClientStopped, null);
+    await this.send(MessageType.ClientReady, PROTOCOL_VERSION);
     this.state = WorkerState.Ready;
   }
 

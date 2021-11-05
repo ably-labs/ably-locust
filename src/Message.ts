@@ -6,11 +6,15 @@ import * as zeromq from 'zeromq';
  */
 export const enum MessageType {
   ClientReady = 'client_ready',
+  ClientStopped = 'client_stopped',
   Heartbeat = 'heartbeat',
   Stats = 'stats',
   Spawn = 'spawn',
+  Spawning = 'spawning',
+  SpawningComplete = 'spawning_complete',
   Stop = 'stop',
   Quit = 'quit',
+  Exception = 'exception',
 }
 
 /**
