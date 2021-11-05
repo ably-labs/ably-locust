@@ -7,6 +7,7 @@ import * as zeromq from 'zeromq';
 export const enum MessageType {
   ClientReady = 'client_ready',
   Heartbeat = 'heartbeat',
+  Stats = 'stats',
   Spawn = 'spawn',
   Stop = 'stop',
   Quit = 'quit',

@@ -12,3 +12,8 @@ export const PROTOCOL_VERSION = '2.4.3';
  * The interval between successive heartbeats.
  */
 export const HEARTBEAT_INTERVAL = 1000;
+
+/**
+ * The interval between sending stats.
+ */
+export const STATS_INTERVAL = 3000

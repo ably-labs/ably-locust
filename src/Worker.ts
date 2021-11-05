@@ -1,5 +1,5 @@
 import { Dealer } from 'zeromq'
-import { HEARTBEAT_INTERVAL, PROTOCOL_VERSION } from './constants'
+import { HEARTBEAT_INTERVAL, PROTOCOL_VERSION, STATS_INTERVAL } from './constants'
 import { Message, MessageType } from './message'
 
 /**
@@ -97,6 +97,11 @@ export class Worker {
    */
   heartbeat: ReturnType<typeof setInterval>;
 
+  /**
+   * The ID of the stats interval.
+   */
+  stats: ReturnType<typeof setInterval>;
+
   constructor(opts: Options) {
     this.id = opts.worker_id;
     this.uri = opts.uri;
@@ -128,6 +133,8 @@ export class Worker {
     await this.send(MessageType.ClientReady, PROTOCOL_VERSION);
 
     this.startHeartbeat();
+
+    this.startStats();
 
     for await (const [data] of this.dealer) {
       try {
@@ -220,6 +227,7 @@ export class Worker {
     this.state = WorkerState.Stopping;
     this.stopAllUsers();
     this.stopHeartbeat();
+    this.stopStats();
     await this.dealer.close()
   }
 
@@ -278,6 +286,54 @@ export class Worker {
     this.send(MessageType.Heartbeat, {
       state:             this.state,
       current_cpu_usage: 0.0,
+    });
+  }
+
+  /**
+   * Start periodically sending stats to the Locust master.
+   */
+  startStats() {
+    this.stats = setInterval(() => this.sendStats(), STATS_INTERVAL);
+  }
+
+  /**
+   * Stop sending stats to the Locust master.
+   */
+  stopStats() {
+    if(this.stats) {
+      clearInterval(this.stats);
+    }
+  }
+
+  /**
+   * Send stats to the Locust master.
+   */
+  sendStats() {
+    this.send(MessageType.Stats, {
+      stats: [],
+      stats_total: {
+        name: 'Aggregated',
+        method: '',
+        num_requests: 0,
+        num_none_requests: 0,
+        num_failures: 0,
+        total_response_time: 0,
+        min_response_time: 0,
+        max_response_time: 0,
+        num_reqs_per_sec: {},
+        num_fail_per_sec: {},
+        response_times: {},
+        total_content_length: 0,
+        start_time: 0,
+        last_request_timestamp: 0,
+      },
+      errors: {},
+      user_classes_count: Object.fromEntries(
+        Object.entries(this.users).map(([userClass, users]) => {
+          return [userClass, users.length]
+        })
+      ),
+      user_count: Object.values(this.users).reduce((sum, users) => sum + users.length, 0),
     });
   }
 }
