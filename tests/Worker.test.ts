@@ -17,8 +17,8 @@ afterEach(() => {
 test('run a load test', async () => {
   // create a worker
   const worker = new Worker({
-    workerID: 'test',
-    uri: locust.zeromq_uri,
+    locustUri: locust.zeromq_uri,
+    workerID:  'test',
   });
 
   // register a TestUser which increases/decreases userCount when it

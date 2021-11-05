@@ -6,12 +6,12 @@ import { Message, MessageType } from './Message';
 /**
  * Options for initialising a Worker.
  *
- * @typeparam uri The URI of the Locust master ZeroMQ socket.
+ * @typeparam locustUri The URI of the Locust master ZeroMQ socket.
  * @typeparam workerID The workerID sent in every protocol message.
  * @typeparam logLevel The log level.
  */
 interface Options {
-  uri: string;
+  locustUri: string;
   workerID: string;
   logLevel?: string;
 }
@@ -71,7 +71,7 @@ export class Worker {
   /**
    * The URI of the Locust master ZeroMQ socket.
    */
-  uri: string;
+  locustUri: string;
 
   /**
    * The ZeroMQ dealer socket used to send and receive protocol messages from
@@ -112,7 +112,7 @@ export class Worker {
 
   constructor(opts: Options) {
     this.id = opts.workerID;
-    this.uri = opts.uri;
+    this.locustUri = opts.locustUri;
     this.dealer = new Dealer({ routingId: this.id });
     this.userFns = {};
     this.users = {};
@@ -144,8 +144,8 @@ export class Worker {
    *
    */
   async run() {
-    this.log.info(`Connecting to Locust master at ${this.uri}`);
-    await this.dealer.connect(this.uri);
+    this.log.info(`Connecting to Locust master at ${this.locustUri}`);
+    await this.dealer.connect(this.locustUri);
 
     this.log.info(`Sending client_ready message with version ${PROTOCOL_VERSION}`);
     await this.send(MessageType.ClientReady, PROTOCOL_VERSION);
