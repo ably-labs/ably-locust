@@ -1,3 +1,4 @@
+import winston from 'winston';
 import { Dealer } from 'zeromq';
 import { HEARTBEAT_INTERVAL, PROTOCOL_VERSION, STATS_INTERVAL } from './constants';
 import { Message, MessageType } from './Message';
@@ -7,10 +8,12 @@ import { Message, MessageType } from './Message';
  *
  * @typeparam uri The URI of the Locust master ZeroMQ socket.
  * @typeparam workerID The workerID sent in every protocol message.
+ * @typeparam logLevel The log level.
  */
 interface Options {
   uri: string;
   workerID: string;
+  logLevel?: string;
 }
 
 /**
@@ -102,6 +105,11 @@ export class Worker {
    */
   stats?: ReturnType<typeof setInterval>;
 
+  /**
+   * The worker's logger object.
+   */
+  log: winston.Logger;
+
   constructor(opts: Options) {
     this.id = opts.workerID;
     this.uri = opts.uri;
@@ -109,6 +117,14 @@ export class Worker {
     this.userFns = {};
     this.users = {};
     this.state = WorkerState.Ready;
+    this.log = winston.createLogger({
+      format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+      transports: [
+        new winston.transports.Console({
+          level: opts.logLevel || 'info',
+        }),
+      ],
+    });
   }
 
   /**
@@ -128,21 +144,26 @@ export class Worker {
    *
    */
   async run() {
+    this.log.info(`Connecting to Locust master at ${this.uri}`);
     await this.dealer.connect(this.uri);
 
+    this.log.info(`Sending client_ready message with version ${PROTOCOL_VERSION}`);
     await this.send(MessageType.ClientReady, PROTOCOL_VERSION);
 
+    this.log.info('Starting hearbeat loop');
     this.startHeartbeat();
 
+    this.log.info('Starting stats loop');
     this.startStats();
 
     for await (const [data] of this.dealer) {
       try {
         const msg = Message.decode(data);
 
+        this.log.info(`Received '${msg.type}' message`);
         this.handle(msg);
       } catch (err) {
-        console.error(`Error handling incoming message: ${err}`);
+        this.log.error(`Error handling incoming message: ${err}`);
       }
     }
   }
@@ -192,7 +213,7 @@ export class Worker {
       // check we have a registered function for the given class
       const userFn = this.userFns[userClass];
       if (userFn === undefined) {
-        console.log(`WARN: no function has been registered for the '${userClass}' user class, skipping those users`);
+        this.log.warn(`no function has been registered for the '${userClass}' user class, skipping those users`);
         continue;
       }
 
@@ -289,6 +310,7 @@ export class Worker {
    * Send a heartbeat to the Locust master.
    */
   sendHeartbeat() {
+    this.log.debug(`Sending heartbeat: state=${this.state}`);
     this.send(MessageType.Heartbeat, {
       state: this.state,
       current_cpu_usage: 0.0,
@@ -315,6 +337,7 @@ export class Worker {
    * Send stats to the Locust master.
    */
   sendStats() {
+    this.log.debug('Sending stats');
     this.send(MessageType.Stats, {
       stats: [],
       stats_total: {
