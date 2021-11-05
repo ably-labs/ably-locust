@@ -1,5 +1,5 @@
 import { Dealer } from 'zeromq'
-import { PROTOCOL_VERSION } from './constants'
+import { HEARTBEAT_INTERVAL, PROTOCOL_VERSION } from './constants'
 import { Message, MessageType } from './message'
 
 /**
@@ -11,6 +11,15 @@ import { Message, MessageType } from './message'
 interface Options {
   uri: string;
   worker_id: string;
+}
+
+/**
+ * The state a Worker is in at any given time.
+ */
+const enum WorkerState {
+  Ready = 'ready',
+  Spawning = 'spawning',
+  Stopping = 'stopping',
 }
 
 /**
@@ -78,12 +87,23 @@ export class Worker {
    */
   users: { [key: string]: Array<User> };
 
+  /**
+   * The current state of the worker.
+   */
+  state: WorkerState;
+
+  /**
+   * The ID of the heartbeat interval.
+   */
+  heartbeat: ReturnType<typeof setInterval>;
+
   constructor(opts: Options) {
     this.id = opts.worker_id;
     this.uri = opts.uri;
     this.dealer = new Dealer({ routingId: this.id });
     this.userFns = {};
     this.users = {};
+    this.state = WorkerState.Ready;
   }
 
   /**
@@ -98,6 +118,7 @@ export class Worker {
    *
    * - connect to the Locust master
    * - send a 'client_ready' message
+   * - start a loop to send 'heartbeat' messages
    * - process incoming messages
    *
    */
@@ -105,6 +126,8 @@ export class Worker {
     await this.dealer.connect(this.uri);
 
     await this.send(MessageType.ClientReady, PROTOCOL_VERSION);
+
+    this.startHeartbeat();
 
     for await (const [data] of this.dealer) {
       try {
@@ -154,6 +177,8 @@ export class Worker {
    * users matches the number in the given spawn data.
    */
   handleSpawn(data: SpawnData) {
+    this.state = WorkerState.Spawning;
+
     for (const userClass in data.user_classes_count) {
       // check we have a registered function for the given class
       const userFn = this.userFns[userClass];
@@ -182,7 +207,9 @@ export class Worker {
    * Handle a 'stop' protocol message by stopping all users.
    */
   handleStop() {
-    this.stopAll();
+    this.state = WorkerState.Stopping;
+    this.stopAllUsers();
+    this.state = WorkerState.Ready;
   }
 
   /**
@@ -190,7 +217,9 @@ export class Worker {
    * ZeroMQ socket.
    */
   async handleQuit() {
-    this.stopAll();
+    this.state = WorkerState.Stopping;
+    this.stopAllUsers();
+    this.stopHeartbeat();
     await this.dealer.close()
   }
 
@@ -220,9 +249,35 @@ export class Worker {
   /**
    * Stop all users.
    */
-  stopAll() {
+  stopAllUsers() {
     for (const userClass in this.users) {
       this.stopUsers(userClass, this.users[userClass].length)
     }
+  }
+
+  /**
+   * Start periodically sending heartbeats to the Locust master.
+   */
+  startHeartbeat() {
+    this.heartbeat = setInterval(() => this.sendHeartbeat(), HEARTBEAT_INTERVAL);
+  }
+
+  /**
+   * Stop sending heartbeats to the Locust master.
+   */
+  stopHeartbeat() {
+    if(this.heartbeat) {
+      clearInterval(this.heartbeat);
+    }
+  }
+
+  /**
+   * Send a heartbeat to the Locust master.
+   */
+  sendHeartbeat() {
+    this.send(MessageType.Heartbeat, {
+      state:             this.state,
+      current_cpu_usage: 0.0,
+    });
   }
 }
