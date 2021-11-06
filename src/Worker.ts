@@ -295,10 +295,22 @@ export class Worker {
    */
   startUsers(userClass: string, userFn: UserFn, count: number) {
     for (let i = 0; i < count; i++) {
-      const user = userFn();
-      user.start();
-      this.users[userClass].push(user);
+      try {
+        const user = userFn();
+        user.start();
+        this.users[userClass].push(user);
+      } catch (err) {
+        this.logException(`Error initialising ${userClass} user: ${err}`);
+      }
     }
+  }
+
+  /**
+   * Log an exception which will appear on the Locust Exceptions page.
+   */
+  logException(msg: string) {
+    this.log.error(msg);
+    this.send(MessageType.Exception, { msg, traceback: '' });
   }
 
   /**
