@@ -272,10 +272,16 @@ export class Worker {
   }
 
   /**
-   * Handle a 'quit' protocol message by stopping all users and closing the
-   * ZeroMQ socket.
+   * Handle a 'quit' protocol message by quitting.
    */
-  async handleQuit() {
+  handleQuit() {
+    this.quit();
+  }
+
+  /**
+   * Quit the worker by stopping all users and closing the ZeroMQ socket.
+   */
+  async quit() {
     this.state = WorkerState.Stopping;
     this.stopAllUsers();
     this.stopHeartbeat();
