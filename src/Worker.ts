@@ -2,6 +2,7 @@ import winston from 'winston';
 import { Dealer } from 'zeromq';
 import { HEARTBEAT_INTERVAL, PROTOCOL_VERSION, STATS_INTERVAL } from './constants';
 import { Message, MessageType } from './Message';
+import { Stats } from './Stats';
 
 /**
  * Options for initialising a Worker.
@@ -74,6 +75,11 @@ export class Worker {
   locustUri: string;
 
   /**
+   * The worker stats which are periodically sent to the Locust master.
+   */
+  stats: Stats;
+
+  /**
    * The ZeroMQ dealer socket used to send and receive protocol messages from
    * the Locust master.
    */
@@ -103,7 +109,7 @@ export class Worker {
   /**
    * The ID of the stats interval.
    */
-  stats?: ReturnType<typeof setInterval>;
+  statsInterval?: ReturnType<typeof setInterval>;
 
   /**
    * The worker's logger object.
@@ -113,6 +119,7 @@ export class Worker {
   constructor(opts: Options) {
     this.id = opts.workerID;
     this.locustUri = opts.locustUri;
+    this.stats = new Stats();
     this.dealer = new Dealer({ routingId: this.id });
     this.userFns = {};
     this.users = {};
@@ -321,15 +328,15 @@ export class Worker {
    * Start periodically sending stats to the Locust master.
    */
   startStats() {
-    this.stats = setInterval(() => this.sendStats(), STATS_INTERVAL);
+    this.statsInterval = setInterval(() => this.sendStats(), STATS_INTERVAL);
   }
 
   /**
    * Stop sending stats to the Locust master.
    */
   stopStats() {
-    if (this.stats) {
-      clearInterval(this.stats);
+    if (this.statsInterval) {
+      clearInterval(this.statsInterval);
     }
   }
 
@@ -338,25 +345,8 @@ export class Worker {
    */
   sendStats() {
     this.log.debug('Sending stats');
-    this.send(MessageType.Stats, {
-      stats: [],
-      stats_total: {
-        name: 'Aggregated',
-        method: '',
-        num_requests: 0,
-        num_none_requests: 0,
-        num_failures: 0,
-        total_response_time: 0,
-        min_response_time: 0,
-        max_response_time: 0,
-        num_reqs_per_sec: {},
-        num_fail_per_sec: {},
-        response_times: {},
-        total_content_length: 0,
-        start_time: 0,
-        last_request_timestamp: 0,
-      },
-      errors: {},
+
+    const stats = Object.assign(this.stats.collect(), {
       user_classes_count: Object.fromEntries(
         Object.entries(this.users).map(([userClass, users]) => {
           return [userClass, users.length];
@@ -364,5 +354,7 @@ export class Worker {
       ),
       user_count: Object.values(this.users).reduce((sum, users) => sum + users.length, 0),
     });
+
+    this.send(MessageType.Stats, stats);
   }
 }
