@@ -1,5 +1,14 @@
-import * as msgpack from '@msgpack/msgpack';
 import * as zeromq from 'zeromq';
+
+/* Locust expects response time stats to be sent as a Map<number,number>, but
+ * many msgpack libraries (e.g. '@msgpack/msgpack') convert a Map<number,number>
+ * into a Map<string,number>, which breaks the stats reporting.
+ *
+ * msgpack5 seems to be the only library that supports encoding a
+ * Map<number,number> without string conversion, so we use that one.
+ */
+import msgpack5 from 'msgpack5';
+const msgpack = msgpack5();
 
 /**
  * The type of a Locust protocol message.
@@ -59,7 +68,7 @@ export class Message {
   /**
    * Encode the Message as a msgpack 3-element array.
    */
-  encode(): Uint8Array {
-    return msgpack.encode([this.type, this.data, this.workerID]);
+  encode(): Buffer {
+    return msgpack.encode([this.type, this.data, this.workerID]).slice();
   }
 }
