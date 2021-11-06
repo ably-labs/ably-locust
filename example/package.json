@@ -1,0 +1,23 @@
+{
+  "name": "@ably/locust-example",
+  "version": "0.0.1",
+  "description": "An example of using the @ably/locust package.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ably-labs/ably-locust.git"
+  },
+  "author": "Lewis Marshall <lewis.marshall@ably.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/ably-labs/ably-locust/issues"
+  },
+  "homepage": "https://github.com/ably-labs/ably-locust#readme",
+  "dependencies": {
+    "@ably/locust": "file:../",
+    "ably": "^1.2.14"
+  }
+}
