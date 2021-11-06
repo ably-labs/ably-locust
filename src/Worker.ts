@@ -23,7 +23,11 @@ interface Options {
 const enum WorkerState {
   Ready = 'ready',
   Spawning = 'spawning',
+  Running = 'running',
+  Cleanup = 'cleanup',
   Stopping = 'stopping',
+  Stopped = 'stopped',
+  Missing = 'missing',
 }
 
 /**
@@ -32,6 +36,7 @@ const enum WorkerState {
  * classes should be running.
  */
 interface SpawnData {
+  timestamp: number;
   user_classes_count: {
     [key: string]: number;
   };
@@ -116,6 +121,12 @@ export class Worker {
    */
   log: winston.Logger;
 
+  /**
+   * The timestamp of the last received 'spawn' protocol message used to
+   * discard outdated messages.
+   */
+  lastReceivedSpawnTimestamp: number;
+
   constructor(opts: Options) {
     this.id = opts.workerID;
     this.locustUri = opts.locustUri;
@@ -132,6 +143,7 @@ export class Worker {
         }),
       ],
     });
+    this.lastReceivedSpawnTimestamp = 0;
   }
 
   /**
@@ -212,8 +224,13 @@ export class Worker {
    * users matches the number in the given spawn data.
    */
   handleSpawn(data: SpawnData) {
-    this.state = WorkerState.Spawning;
+    if (data.timestamp < this.lastReceivedSpawnTimestamp) {
+      this.log.warn('Discard spawn message with older or equal timestamp than timestamp of previous spawn message');
+      return;
+    }
+    this.lastReceivedSpawnTimestamp = data.timestamp;
 
+    this.state = WorkerState.Spawning;
     this.send(MessageType.Spawning, null);
 
     for (const userClass of Object.keys(data.user_classes_count)) {
@@ -239,7 +256,8 @@ export class Worker {
       }
     }
 
-    this.send(MessageType.SpawningComplete, data);
+    this.state = WorkerState.Running;
+    this.send(MessageType.SpawningComplete, this.spawnState());
   }
 
   /**
@@ -262,6 +280,7 @@ export class Worker {
     this.stopAllUsers();
     this.stopHeartbeat();
     this.stopStats();
+    await this.send(MessageType.Quit, null);
     await this.dealer.close();
   }
 
@@ -346,15 +365,23 @@ export class Worker {
   sendStats() {
     this.log.debug('Sending stats');
 
-    const stats = Object.assign(this.stats.collect(), {
+    const stats = Object.assign(this.stats.collect(), this.spawnState());
+
+    this.send(MessageType.Stats, stats);
+  }
+
+  /**
+   * Construct the current spawn state (i.e. number of running users both for
+   * each class and in total).
+   */
+  spawnState() {
+    return {
       user_classes_count: Object.fromEntries(
         Object.entries(this.users).map(([userClass, users]) => {
           return [userClass, users.length];
         }),
       ),
       user_count: Object.values(this.users).reduce((sum, users) => sum + users.length, 0),
-    });
-
-    this.send(MessageType.Stats, stats);
+    };
   }
 }
