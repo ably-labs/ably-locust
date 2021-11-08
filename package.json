@@ -1,7 +1,7 @@
 {
-  "name": "@ably/locust",
+  "name": "@ably-labs/locust",
   "version": "0.0.1",
-  "description": "A pub/sub load generator for Locust.io.",
+  "description": "A JavaScript load generator for Locust.io.",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc --build",

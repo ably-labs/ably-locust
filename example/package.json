@@ -1,7 +1,7 @@
 {
-  "name": "@ably/locust-example",
+  "name": "@ably-labs/locust-example",
   "version": "0.0.1",
-  "description": "An example of using the @ably/locust package.",
+  "description": "An example of using the @ably-labs/locust package.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/ably-labs/ably-locust#readme",
   "dependencies": {
-    "@ably/locust": "file:../",
+    "@ably-labs/locust": "file:../",
     "ably": "^1.2.14"
   }
 }

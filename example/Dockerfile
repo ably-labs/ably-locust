@@ -1,6 +1,6 @@
 FROM node:16
 
-# Install @ably/locust into /usr/src/app
+# Install @ably-labs/locust into /usr/src/app
 WORKDIR /usr/src/app
 COPY package.json package-lock.json ./
 RUN npm install
