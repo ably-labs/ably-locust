@@ -1,8 +1,8 @@
 // An example demonstrating how to use @ably-labs/locust to connect to Locust and
 // start users during a load test.
 
-const { hostname } = require('os');
-const { Worker } = require('@ably-labs/locust');
+import { hostname } from 'os';
+import { Worker } from '@ably-labs/locust';
 
 const worker = new Worker({
   locustUri: 'tcp://locust:5557',

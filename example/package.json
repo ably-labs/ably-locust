@@ -18,6 +18,6 @@
   "homepage": "https://github.com/ably-labs/ably-locust#readme",
   "dependencies": {
     "@ably-labs/locust": "file:../",
-    "ably": "^1.2.14"
+    "ably": "^1.2.15"
   }
 }

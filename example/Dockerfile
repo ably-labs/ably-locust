@@ -10,6 +10,7 @@ RUN npm run build
 # Install the example dependencies
 WORKDIR /usr/src/app/example
 RUN npm install
+RUN npm install -g ts-node typescript '@types/node'
 
 # Set the command to run the example
-CMD ["node", "index.js"]
+CMD ["ts-node", "index.ts"]
