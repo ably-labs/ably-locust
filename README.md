@@ -21,7 +21,7 @@ cp .env.sample .env
 
 # ... edit ABLY_API_KEY in .env ...
 
-docker-compose up --build
+docker compose up --build
 ```
 
 Visit the Locust web UI at http://localhost:8089, start a load test, and you should see `subscribe` and `publish` events reported by the JavaScript users.
