@@ -12,4 +12,4 @@ WORKDIR /usr/src/app/example
 RUN npm install
 
 # Set the command to run the example
-CMD ["ts-node", "index.ts"]
+CMD ["npm", "start"]
