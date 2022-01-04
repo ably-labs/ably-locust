@@ -2,7 +2,7 @@ import * as Ably from 'ably';
 import { Stats } from '@ably-labs/locust';
 
 class User {
-  stats?: Stats = undefined;
+  stats: Stats;
   startTime: number = 0;
   client?: Ably.Realtime = undefined;
 
@@ -14,8 +14,7 @@ class User {
     this.startTime = Date.now();
     this.client = new Ably.Realtime({
       key: process.env.ABLY_API_KEY,
-      realtimeHost: process.env.ABLY_REALTIME_HOST || undefined,
-      restHost: process.env.ABLY_REST_HOST || undefined
+      environment: process.env.ABLY_ENV || undefined
     });
   }
 
