@@ -6,7 +6,7 @@
  *
  * See https://github.com/locustio/locust/blob/2.4.3/locust/runners.py#L879-L886
  */
-export const PROTOCOL_VERSION = '2.4.3';
+export const PROTOCOL_VERSION = '2.5.0';
 
 /**
  * The interval between successive heartbeats.

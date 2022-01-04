@@ -2,7 +2,7 @@ version: '3'
 
 services:
   locust:
-    image: locustio/locust:2.4.3
+    image: locustio/locust:2.5.0
     environment:
       LOCUST_HOST: http://locust
       LOCUST_MODE_MASTER: "true"
