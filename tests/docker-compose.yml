@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  locust:
+    image: locustio/locust:2.5.0
+    environment:
+      LOCUST_HOST: http://locust
+      LOCUST_MODE_MASTER: "true"
+    volumes:
+      - ./helpers/locustfile.py:/home/locust/locustfile.py
+    ports:
+      - 8089:8089
+      - 5557:5557

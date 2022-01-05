@@ -83,3 +83,15 @@ worker.register('ExampleUser', () => new User());
 
 worker.run();
 ```
+
+## Testing
+
+Start an instance of Locust and run the tests:
+
+```
+cd tests
+
+docker compose up --build
+
+npm test
+```
