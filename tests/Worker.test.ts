@@ -3,21 +3,14 @@ import { waitUntil, LocustProcess } from './helpers';
 
 jest.setTimeout(15000);
 
-let locust: LocustProcess;
+export const zeromq_uri = 'tcp://127.0.0.1:5557';
 
-beforeEach(() => {
-  locust = new LocustProcess();
-  return locust.start();
-});
-
-afterEach(() => {
-  return locust.stop();
-});
+let locust: LocustProcess = new LocustProcess();
 
 test('run a load test', async () => {
   // create a worker
   const worker = new Worker({
-    locustUri: locust.zeromq_uri,
+    locustUri: zeromq_uri,
     workerID:  'test',
   });
 
@@ -55,4 +48,7 @@ test('run a load test', async () => {
 
   // check 10 users stop
   await waitUntil(userCountIs(0), 500, 10000);
+
+  // stop the worker
+  await worker.quit();
 });
