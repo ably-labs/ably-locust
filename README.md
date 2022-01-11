@@ -10,7 +10,7 @@ _[Ably](https://ably.com) is the platform that powers synchronized digital exper
 
 ## Quick Start
 
-See [example/users.js](/example/users.js) for an example of defining Locust users in JavaScript, and [example/index.js](/example/index.js) for an example program which connects to a Locust master and runs the defined users during a load test.
+See [example/users.ts](/example/users.ts) for an example of defining Locust users in TypeScript, and [example/index.ts](/example/index.ts) for an example program which connects to a Locust master and runs the defined users during a load test.
 
 The example can be run by copying `example/.env.sample` to `example/.env`, setting `ABLY_API_KEY` to your Ably API key, and running [Docker Compose](https://docs.docker.com/compose/):
 
