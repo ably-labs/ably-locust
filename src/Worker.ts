@@ -1,4 +1,4 @@
-import winston from 'winston';
+import * as winston from 'winston';
 import { Dealer } from 'zeromq';
 import { HEARTBEAT_INTERVAL, PROTOCOL_VERSION, STATS_INTERVAL } from './constants';
 import { Message, MessageType } from './Message';
