@@ -64,6 +64,11 @@ interface User {
 type UserFn = () => User;
 
 /**
+ * A function which is called when an event happens.
+ */
+type EventFn = (data: any) => void;
+
+/**
  * A Locust worker which connects to a Locust master ZeroMQ socket and spawns
  * Locust users during an active load test.
  */
@@ -127,6 +132,11 @@ export class Worker {
    */
   lastReceivedSpawnTimestamp: number;
 
+  /**
+   * A set of functions which are called when events happen.
+   */
+  callbacks: { [key: string]: EventFn[] };
+
   constructor(opts: Options) {
     this.id = opts.workerID;
     this.locustUri = opts.locustUri;
@@ -144,6 +154,7 @@ export class Worker {
       ],
     });
     this.lastReceivedSpawnTimestamp = 0;
+    this.callbacks = {};
   }
 
   /**
@@ -185,6 +196,30 @@ export class Worker {
         this.log.error(`Error handling incoming message: ${err}`);
       }
     }
+  }
+
+  /**
+   * Register a callback to be called when an event happens.
+   */
+  on(event: string, callback: (data: any) => void) {
+    if(!this.callbacks[event]) {
+      this.callbacks[event] = [];
+    }
+    this.callbacks[event].push(callback);
+  }
+
+  /**
+   * Register a callback to be called when a user starts.
+   */
+  onUserStart(callback: EventFn) {
+    this.on('user.start', callback);
+  }
+
+  /**
+   * Register a callback to be called when a user stops.
+   */
+  onUserStop(callback: EventFn) {
+    this.on('user.stop', callback);
   }
 
   /**
@@ -299,6 +334,7 @@ export class Worker {
         const user = userFn();
         user.start();
         this.users[userClass].push(user);
+        this.emit('user.start', { userClass });
       } catch (err) {
         this.logException(`Error initialising ${userClass} user: ${err}`);
       }
@@ -321,6 +357,7 @@ export class Worker {
       const user = this.users[userClass].pop();
       if (user !== undefined) {
         user.stop();
+        this.emit('user.stop', { userClass });
       }
     }
   }
@@ -401,5 +438,18 @@ export class Worker {
       ),
       user_count: Object.values(this.users).reduce((sum, users) => sum + users.length, 0),
     };
+  }
+
+  /**
+   * Invoke all callbacks for the given event with the given data.
+   */
+  emit(event: string, data: any) {
+    const callbacks = this.callbacks[event];
+    if(!callbacks) {
+      return;
+    }
+    for (const callback of callbacks) {
+      callback(data);
+    }
   }
 }
