@@ -13,8 +13,8 @@ const worker = new Worker({
 // Register a function to intialise users for each user class defined in
 // locustfile.py
 const { Publisher, Subscriber } = require('./users');
-worker.register('Subscriber', () => new Subscriber(worker.stats));
-worker.register('Publisher',  () => new Publisher(worker.stats));
+worker.register('Subscriber', (index: number) => new Subscriber(worker.stats));
+worker.register('Publisher',  (index: number) => new Publisher(worker.stats));
 
 // Quit the worker when receiving a termination signal.
 process.on('SIGTERM', () => worker.quit());

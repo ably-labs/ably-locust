@@ -61,7 +61,7 @@ interface User {
 /**
  * A function which is registered with a worker to initialise a User.
  */
-type UserFn = () => User;
+type UserFn = (index: number) => User;
 
 /**
  * A Locust worker which connects to a Locust master ZeroMQ socket and spawns
@@ -149,7 +149,7 @@ export class Worker {
   /**
    * Register a function to initialise users of the given class name.
    */
-  register(userClass: string, userFn: () => User) {
+  register(userClass: string, userFn: (index: number) => User) {
     this.userFns[userClass] = userFn;
   }
 
@@ -296,7 +296,8 @@ export class Worker {
   startUsers(userClass: string, userFn: UserFn, count: number) {
     for (let i = 0; i < count; i++) {
       try {
-        const user = userFn();
+        const index = this.users[userClass].length;
+        const user = userFn(index);
         user.start();
         this.users[userClass].push(user);
       } catch (err) {

@@ -17,8 +17,9 @@ test('run a load test', async () => {
   // register a TestUser which increases/decreases userCount when it
   // starts/stops.
   let userCount = 0;
-  worker.register('TestUser', () => ({
+  worker.register('TestUser', (index: number) => ({
     start: () => {
+      expect(index).toBe(userCount);
       userCount += 1;
     },
     stop: () => {

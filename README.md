@@ -79,7 +79,7 @@ class User {
   }
 }
 
-worker.register('ExampleUser', () => new User());
+worker.register('ExampleUser', (index) => new User());
 
 worker.run();
 ```
