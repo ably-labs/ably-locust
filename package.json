@@ -1,6 +1,6 @@
 {
   "name": "@ably-labs/locust",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A JavaScript load generator for Locust.io.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
