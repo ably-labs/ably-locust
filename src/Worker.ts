@@ -190,7 +190,7 @@ export class Worker {
       try {
         const msg = Message.decode(data);
 
-        this.log.info(`Received '${msg.type}' message`);
+        this.log.debug(`Received '${msg.type}' message`);
         this.handle(msg);
       } catch (err) {
         this.log.error(`Error handling incoming message: ${err}`);
@@ -268,6 +268,7 @@ export class Worker {
     this.state = WorkerState.Spawning;
     this.send(MessageType.Spawning, null);
 
+    this.log.info(`Handling spawn message: expected = ${JSON.stringify(data.user_classes_count)}, actual = ${JSON.stringify(this.spawnState().user_classes_count)}`);
     for (const userClass of Object.keys(data.user_classes_count)) {
       // check we have a registered function for the given class
       const userFn = this.userFns[userClass];
@@ -329,6 +330,7 @@ export class Worker {
    * Start the given number of users.
    */
   startUsers(userClass: string, userFn: UserFn, count: number) {
+    this.log.debug(`Starting ${count} ${userClass} users`);
     for (let i = 0; i < count; i++) {
       try {
         const user = userFn();
@@ -353,6 +355,7 @@ export class Worker {
    * Stop the given number of users.
    */
   stopUsers(userClass: string, count: number) {
+    this.log.debug(`Stopping ${count} ${userClass} users`);
     for (let i = 0; i < count; i++) {
       const user = this.users[userClass].pop();
       if (user !== undefined) {
