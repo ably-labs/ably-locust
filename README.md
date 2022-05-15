@@ -14,7 +14,7 @@ See [example/users.ts](/example/users.ts) for an example of defining Locust user
 
 The example can be run by copying `example/.env.sample` to `example/.env`, setting `ABLY_API_KEY` to your Ably API key, and running [Docker Compose](https://docs.docker.com/compose/):
 
-```
+```bash
 cd example
 
 cp .env.sample .env
@@ -36,7 +36,7 @@ Locust has the concept of a User which runs a set of requests during a load test
 
 `ably-locust` is an implementation of a Locust worker process in JavaScript. It can be installed by running:
 
-```
+```bash
 npm install @ably-labs/locust
 ```
 
@@ -48,7 +48,7 @@ One of the messages a worker receives is a `spawn` message which declares how ma
 
 For example, assuming there is a Locust master running at `locust.example.com:5557` which is using the following `locustfile.py`:
 
-```
+```python
 from locust import User
 
 class ExampleUser(User):
@@ -57,7 +57,7 @@ class ExampleUser(User):
 
 Then here's an example program where each user reports a successful request every second:
 
-```
+```javascript
 const { Worker } = require('@ably-labs/locust');
 
 const worker = new Worker({
@@ -88,7 +88,7 @@ worker.run();
 
 Start an instance of Locust and run the tests:
 
-```
+```bash
 cd tests
 
 docker compose up --build
